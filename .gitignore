@@ -1,0 +1,4 @@
+.bender/
+build/
+*.log
+.DS_Store

@@ -1,0 +1,9 @@
+package:
+  name: common_cells
+  description: Project-independent SystemVerilog interfaces and reusable cells
+
+sources:
+  - rtl/protocols/handshake_if.sv
+  - rtl/protocols/valid_if.sv
+  - rtl/fifo/**/*.sv
+  - rtl/pipe/**/*.sv
