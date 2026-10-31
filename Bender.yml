@@ -3,7 +3,7 @@ package:
   description: Project-independent SystemVerilog interfaces and reusable cells
 
 dependencies:
-  dicflow: {git: "https://github.com/dashygo097/dicflow.git", rev: main}
+  dicflow: { git: "https://github.com/dashygo097/dicflow.git", rev: main }
 
 sources:
   - rtl/protocols/handshake_if.sv
