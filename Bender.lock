@@ -1,0 +1,8 @@
+# Project dependency declaration SHA256: a151923da743c3fa83837f098bb001ffc006bdaccd0acd7e5839f9014033a199
+packages:
+  dicflow:
+    revision: 929d86dfbd6bea3a181a941ec05e0bd2d790eaa8
+    version: null
+    source:
+      Git: https://github.com/dashygo097/dicflow.git
+    dependencies: []

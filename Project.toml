@@ -1,0 +1,20 @@
+schema_version = 7
+
+# Maintainer workflows; RTL sources and dependencies belong to Bender.yml.
+[bender]
+version = "0.32.1"
+
+[flow.lint.sync_fifo]
+backend = "verilator"
+options = ["--top-module", "sync_fifo", "-GDEPTH=4", "-Wno-fatal"]
+
+[flow.lint.async_fifo]
+backend = "verilator"
+options = ["--top-module", "async_fifo", "-GDEPTH=4", "-Wno-fatal"]
+
+[flow.lint.pipe_stage]
+backend = "verilator"
+options = ["--top-module", "pipe_stage", "-Wno-fatal"]
+
+[workflow]
+stages = ["lint"]
