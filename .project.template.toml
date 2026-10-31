@@ -1,0 +1,5 @@
+schema_version = 7
+
+# Optional local workflow configuration; HDL metadata belongs to Bender.yml.
+[bender]
+version = "0.32.1"
