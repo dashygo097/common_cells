@@ -31,7 +31,7 @@ def main():
     root = Path(os.environ.get("PROJECT_ROOT", os.getcwd())).resolve()
     if action == "help":
         print(
-            "Edit Project.toml; use make init, env, deps-update, <stage>, workflow, clean or distclean."
+            "Edit Project.toml; use make env, deps-update, <stage>, workflow, clean or distclean."
         )
         return
     try:
