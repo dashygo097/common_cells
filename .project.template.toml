@@ -1,0 +1,27 @@
+schema_version = 7
+
+[framework]
+package = "dicflow"
+
+[design]
+top = "common_cells_lint_top"
+parameters = { DATA_WIDTH = 32, DEPTH = 4 }
+
+[bender]
+name = "common_cells"
+version = "0.32.1"
+dependencies = { dicflow = { git = "https://github.com/dashygo097/dicflow.git", rev = "main" } }
+sources = [
+  "rtl/protocols/handshake_if.sv",
+  "rtl/protocols/valid_if.sv",
+  "rtl/fifo/**/*.sv",
+  "rtl/pipe/**/*.sv",
+  { target = "lint", files = ["verification/lint/common_cells_lint_top.sv"] },
+]
+
+[flow.lint.verilator]
+targets = ["lint"]
+options = ["-Wno-fatal"]
+
+[workflow]
+stages = ["lint"]
