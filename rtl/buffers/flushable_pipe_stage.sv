@@ -1,4 +1,4 @@
-module pipe_stage #(
+module flushable_pipe_stage #(
     parameter type payload_t = logic
 ) (
     input logic clk_i,

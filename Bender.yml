@@ -8,5 +8,4 @@ dependencies:
 sources:
   - rtl/protocols/handshake_if.sv
   - rtl/protocols/valid_if.sv
-  - rtl/fifo/**/*.sv
-  - rtl/pipe/**/*.sv
+  - rtl/buffers/**/*.sv
