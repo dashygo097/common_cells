@@ -9,10 +9,14 @@ module pipe_stage #(
     handshake_if.source downstream
 );
 
-  flushable_pipe_stage#(
+  flushable_pipe_stage #(
       .payload_t(payload_t)
-  ) (
-      .clk_i(clk_i), .rst_n_i(rst_n_i)
+  ) pipe_stage_inst0 (
+      .clk_i(clk_i),
+      .rst_n_i(rst_n_i),
+      .flush_i(1'b0),
+      .upstream(upstream),
+      .downstream(downstream)
   );
 
 endmodule

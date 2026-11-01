@@ -6,6 +6,8 @@ dependencies:
   dicflow: { git: "https://github.com/dashygo097/dicflow.git", rev: main }
 
 sources:
+  - rtl/pkgs/**/*.sv
   - rtl/protocols/handshake_if.sv
   - rtl/protocols/valid_if.sv
   - rtl/buffers/**/*.sv
+  - rtl/routers/**/*.sv

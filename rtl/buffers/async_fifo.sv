@@ -15,14 +15,6 @@ module async_fifo #(
     output logic empty_o,
     output logic full_o
 );
-  initial begin
-    assert (DEPTH >= 2)
-    else $fatal(1, "DEPTH must be at least 2");
-
-    assert ((DEPTH & (DEPTH - 1)) == 0)
-    else $fatal(1, "DEPTH must be a power of two");
-  end
-
   localparam int unsigned AddrWidth = $clog2(DEPTH);
   localparam int unsigned PtrWidth  = AddrWidth + 1;
 
@@ -96,6 +88,15 @@ module async_fifo #(
 
     out.valid = !empty_o;
     out.payload = storage[rptr_r[AddrWidth-1:0]];
+  end
+
+  initial begin : check_parameters
+    if (DEPTH >= 2) begin
+      $fatal(1, "async_fifo: DEPTH must be at least 2");
+    end
+    if ((DEPTH & (DEPTH - 1)) == 0) begin
+      $fatal(1, "async_fifo: DEPTH must be a power of two");
+    end
   end
 
 endmodule
