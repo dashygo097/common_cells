@@ -48,7 +48,7 @@ module sync_fifo #(
         if (w_ptr_r == PtrWidth'(DEPTH - 1)) begin
           w_ptr_r <= '0;
         end else begin
-          w_ptr_r <= w_ptr_r + '1;
+          w_ptr_r <= w_ptr_r + 1'b1;
         end
       end
 
@@ -56,7 +56,7 @@ module sync_fifo #(
         if (r_ptr_r == PtrWidth'(DEPTH - 1)) begin
           r_ptr_r <= '0;
         end else begin
-          r_ptr_r <= r_ptr_r + '1;
+          r_ptr_r <= r_ptr_r + 1'b1;
         end
       end
 

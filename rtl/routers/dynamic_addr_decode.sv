@@ -16,7 +16,10 @@ module dynamic_addr_decode #(
     input logic rst_n_i,
 
     input addr_t addr_i,
-    input addr_range_t [NUM_IDS - 1:0] addr_map_i
+    input addr_range_t [NUM_IDS - 1:0] addr_map_i,
+
+    output logic valid_o,
+    output id_t  id_o
 );
 
 endmodule
