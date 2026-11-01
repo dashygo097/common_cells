@@ -1,6 +1,6 @@
 module async_fifo #(
     parameter type payload_t = logic,
-    parameter int unsigned DEPTH
+    parameter int unsigned DEPTH = 4
 ) (
     input logic wclk_i,
     input logic wrst_n_i,
@@ -23,14 +23,14 @@ module async_fifo #(
     else $fatal(1, "DEPTH must be a power of two");
   end
 
-  localparam int unsigned ADDR_WIDTH = $clog2(DEPTH);
-  localparam int unsigned PTR_WIDTH  = ADDR_WIDTH + 1;
+  localparam int unsigned AddrWidth = $clog2(DEPTH);
+  localparam int unsigned PtrWidth  = AddrWidth + 1;
 
   payload_t storage[DEPTH];
 
   // write
-  logic [PTR_WIDTH - 1:0] wptr_r;
-  logic [PTR_WIDTH - 1:0] wptr_gray_r;
+  logic [PtrWidth - 1:0] wptr_r;
+  logic [PtrWidth - 1:0] wptr_gray_r;
 
   always_ff @(posedge wclk_i or negedge wrst_n_i) begin
     if (!wrst_n_i) begin
@@ -38,14 +38,14 @@ module async_fifo #(
     end else begin
       if (in.valid && in.ready) begin
         wptr_r <= wptr_r + '1;
-        storage[wptr_r[ADDR_WIDTH-1:0]] <= in.payload;
+        storage[wptr_r[AddrWidth-1:0]] <= in.payload;
       end
     end
   end
 
   // read
-  logic [PTR_WIDTH - 1:0] rptr_r;
-  logic [PTR_WIDTH - 1:0] rptr_gray_r;
+  logic [PtrWidth - 1:0] rptr_r;
+  logic [PtrWidth - 1:0] rptr_gray_r;
 
   always_ff @(posedge rclk_i or negedge rrst_n_i) begin
     if (!rrst_n_i) begin
@@ -58,8 +58,8 @@ module async_fifo #(
   end
 
   // synchronization
-  logic [PTR_WIDTH - 1:0] rptr_gray_meta_r;
-  logic [PTR_WIDTH - 1:0] rptr_gray_sync_r;
+  logic [PtrWidth - 1:0] rptr_gray_meta_r;
+  logic [PtrWidth - 1:0] rptr_gray_sync_r;
 
   always_ff @(posedge wclk_i or negedge wrst_n_i) begin
     if (!wrst_n_i) begin
@@ -71,8 +71,8 @@ module async_fifo #(
     end
   end
 
-  logic [PTR_WIDTH - 1:0] wptr_gray_meta_r;
-  logic [PTR_WIDTH - 1:0] wptr_gray_sync_r;
+  logic [PtrWidth - 1:0] wptr_gray_meta_r;
+  logic [PtrWidth - 1:0] wptr_gray_sync_r;
 
   always_ff @(posedge rclk_i or negedge rrst_n_i) begin
     if (!rrst_n_i) begin
@@ -89,13 +89,13 @@ module async_fifo #(
     wptr_gray_r = wptr_r ^ (wptr_r >> 1);
     rptr_gray_r = rptr_r ^ (rptr_r >> 1);
 
-    full_o = (wptr_gray_r == (rptr_gray_sync_r ^ (PTR_WIDTH'(3) << (PTR_WIDTH - 2))));
+    full_o = (wptr_gray_r == (rptr_gray_sync_r ^ (PtrWidth'(3) << (PtrWidth - 2))));
     in.ready = !full_o;
 
     empty_o = rptr_gray_r == wptr_gray_sync_r;
 
     out.valid = !empty_o;
-    out.payload = storage[rptr_r[ADDR_WIDTH-1:0]];
+    out.payload = storage[rptr_r[AddrWidth-1:0]];
   end
 
 endmodule
