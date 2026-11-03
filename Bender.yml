@@ -10,3 +10,18 @@ sources:
   - rtl/protocols/**/*.sv
   - rtl/buffers/**/*.sv
   - rtl/routers/**/*.sv
+  - target: all(verify, verify_async_fifo)
+    files:
+      - tests/tb_async_fifo.sv
+  - target: all(verify, verify_dynamic_addr_decode)
+    files:
+      - tests/tb_dynamic_addr_decode.sv
+  - target: all(verify, verify_flushable_pipe_stage)
+    files:
+      - tests/tb_flushable_pipe_stage.sv
+  - target: all(verify, verify_pipe_stage)
+    files:
+      - tests/tb_pipe_stage.sv
+  - target: all(verify, verify_sync_fifo)
+    files:
+      - tests/tb_sync_fifo.sv

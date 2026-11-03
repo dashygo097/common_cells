@@ -12,9 +12,6 @@ module dynamic_addr_decode #(
       logic [ADDR_WIDTH - 1:0] addr_end;
     }
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
-
     input addr_t addr_i,
     input addr_range_t [NUM_IDS - 1:0] addr_map_i,
 
