@@ -1,13 +1,18 @@
 schema_version = 7
 
-# Optional local workflow configuration; HDL metadata belongs to Bender.yml.
 [bender]
 version = "0.32.1"
 
-# Optional module verification profile:
-# [flow.verify.vcs]
-# options = ["-full64", "-timescale=1ns/1ps", "-ntb_opts", "uvm-1.2"]
-# testbench = ""
-# targets = []
-# seeds = [1, 2, 3]
-# timeout_seconds = 120
+[flow.verify.vcs]
+options = ["-full64", "-timescale=1ns/1ps", "-no_save"]
+seeds = [1, 2, 3]
+timeout_seconds = 120
+
+[flow.verify.vcs.verify_dynamic_addr_decode]
+top = "tb_dynamic_addr_decode"
+
+[flow.verify.vcs.verify_flushable_pipe_stage]
+top = "tb_flushable_pipe_stage"
+
+[flow.verify.vcs.verify_fifo]
+top = "tb_fifo"

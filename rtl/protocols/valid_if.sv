@@ -5,8 +5,8 @@ interface valid_if #(
   logic valid;
   payload_t payload;
 
-  modport sink(input valid, input payload);
-  modport source(output valid, output payload);
-  modport monitor(input valid, input payload);
+  modport sink(input valid, payload);
+  modport source(output valid, payload);
+  modport monitor(input valid, payload);
 
 endinterface

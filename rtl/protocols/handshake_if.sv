@@ -6,8 +6,8 @@ interface handshake_if #(
   logic ready;
   payload_t payload;
 
-  modport sink(input valid, input payload, output ready);
-  modport source(input ready, output valid, output payload);
-  modport monitor(input valid, input ready, input payload);
+  modport sink(input valid, payload, output ready);
+  modport source(input ready, output valid, payload);
+  modport monitor(input valid, ready, payload);
 
 endinterface

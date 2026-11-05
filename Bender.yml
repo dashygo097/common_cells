@@ -5,23 +5,20 @@ package:
 dependencies:
   dicflow: { git: "https://github.com/dashygo097/dicflow.git", rev: main }
 
+export_include_dirs:
+  - include
+
 sources:
   - rtl/pkgs/cc_pkg.sv
   - rtl/protocols/**/*.sv
   - rtl/buffers/**/*.sv
   - rtl/routers/**/*.sv
-  - target: all(verify, verify_async_fifo)
-    files:
-      - tests/tb_async_fifo.sv
   - target: all(verify, verify_dynamic_addr_decode)
     files:
       - tests/tb_dynamic_addr_decode.sv
   - target: all(verify, verify_flushable_pipe_stage)
     files:
       - tests/tb_flushable_pipe_stage.sv
-  - target: all(verify, verify_pipe_stage)
+  - target: all(verify, verify_fifo)
     files:
-      - tests/tb_pipe_stage.sv
-  - target: all(verify, verify_sync_fifo)
-    files:
-      - tests/tb_sync_fifo.sv
+      - tests/tb_fifo.sv

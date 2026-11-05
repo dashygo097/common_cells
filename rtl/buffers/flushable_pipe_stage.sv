@@ -1,4 +1,8 @@
-module flushable_pipe_stage #(
+`include "cc/assertions.svh"
+
+module flushable_pipe_stage
+  import cc_pkg::*;
+#(
     parameter type payload_t = logic
 ) (
     input logic clk_i,
@@ -35,5 +39,11 @@ module flushable_pipe_stage #(
       end
     end
   end
+
+  `CC_ASSERT_INIT(InputPayloadWidth, $bits(upstream.payload) == $bits(payload_t))
+  `CC_ASSERT_INIT(OutputPayloadWidth, $bits(downstream.payload) == $bits(payload_t))
+  `CC_ASSERT(OutputStableUnlessFlushed,
+             downstream.valid && !downstream.ready |=> flush_i || (downstream.valid && $stable
+             (downstream.payload)))
 
 endmodule

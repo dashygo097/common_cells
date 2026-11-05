@@ -11,7 +11,7 @@ module pipe_stage #(
 
   flushable_pipe_stage #(
       .payload_t(payload_t)
-  ) pipe_stage_inst0 (
+  ) i_flushable_pipe_stage (
       .clk_i(clk_i),
       .rst_n_i(rst_n_i),
       .flush_i(1'b0),

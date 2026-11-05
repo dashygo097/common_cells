@@ -1,4 +1,8 @@
-module sync_fifo #(
+`include "cc/assertions.svh"
+
+module fifo
+  import cc_pkg::*;
+#(
     parameter type payload_t = logic,
     parameter int unsigned DEPTH = 4
 ) (
@@ -11,8 +15,8 @@ module sync_fifo #(
     output logic empty_o,
     output logic full_o
 );
-  localparam int unsigned PtrWidth = DEPTH > 1 ? $clog2(DEPTH) : 1;
-  localparam int unsigned CntWidth = DEPTH > 1 ? $clog2(DEPTH + 1) : 1;
+  localparam int unsigned PtrWidth = index_width(DEPTH);
+  localparam int unsigned CntWidth = index_width(DEPTH + 1);
 
   payload_t storage[DEPTH];
 
@@ -69,4 +73,14 @@ module sync_fifo #(
       endcase
     end
   end
+
+  `CC_ASSERT_INIT(DepthPositive, DEPTH > 0)
+  `CC_ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(payload_t))
+  `CC_ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(payload_t))
+
+  `CC_ASSERT(CountInRange, counter_r <= CntWidth'(DEPTH))
+  `CC_ASSERT(WritePointerInRange, {1'b0, w_ptr_r} < (PtrWidth + 1)'(DEPTH))
+  `CC_ASSERT(ReadPointerInRange, {1'b0, r_ptr_r} < (PtrWidth + 1)'(DEPTH))
+  `CC_ASSERT(OutputStable, out.valid && !out.ready |=> out.valid && $stable(out.payload))
+
 endmodule
