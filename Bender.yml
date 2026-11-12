@@ -16,9 +16,12 @@ sources:
   - target: all(verify, verify_dynamic_addr_decode)
     files:
       - tests/tb_dynamic_addr_decode.sv
-  - target: all(verify, verify_flushable_pipe_stage)
+  - target: all(verify, verify_flushable_pipe)
     files:
-      - tests/tb_flushable_pipe_stage.sv
+      - tests/tb_flushable_pipe.sv
   - target: all(verify, verify_fifo)
     files:
       - tests/tb_fifo.sv
+  - target: all(verify, verify_skid_buffer)
+    files:
+      - tests/tb_skid_buffer.sv

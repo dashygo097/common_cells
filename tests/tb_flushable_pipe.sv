@@ -1,4 +1,4 @@
-module tb_flushable_pipe_stage
+module tb_flushable_pipe
   import df_verify_pkg::*;
 #(
     parameter int unsigned RANDOM_CYCLES = 1000
@@ -12,36 +12,36 @@ module tb_flushable_pipe_stage
   logic clk_i;
   logic rst_n_i;
   logic flush_i;
-  handshake_if #(.payload_t(payload_t)) upstream ();
-  handshake_if #(.payload_t(payload_t)) downstream ();
+  handshake_if #(.payload_t(payload_t)) in ();
+  handshake_if #(.payload_t(payload_t)) out ();
   logic full_model;
   payload_t payload_model;
   ordered_scoreboard #(payload_t) scoreboard;
 
-  flushable_pipe_stage #(
+  flushable_pipe #(
       .payload_t(payload_t)
   ) u_dut (
       .clk_i(clk_i),
       .rst_n_i(rst_n_i),
       .flush_i(flush_i),
-      .upstream(upstream),
-      .downstream(downstream)
+      .in(in),
+      .out(out)
   );
 
   always #5ns clk_i = ~clk_i;
 
   task automatic reset_dut();
     @(negedge clk_i);
-    upstream.valid = 1'b0;
-    upstream.payload = '0;
-    downstream.ready = 1'b0;
+    in.valid = 1'b0;
+    in.payload = '0;
+    out.ready = 1'b0;
     flush_i = 1'b0;
     rst_n_i = 1'b0;
     full_model = 1'b0;
     payload_model = '0;
     scoreboard.clear();
     #1ns;
-    check(!downstream.valid, "Reset must clear downstream validity");
+    check(!out.valid, "Reset must clear out validity");
     wait_cycles(clk_i, 2);
     @(negedge clk_i);
     rst_n_i = 1'b1;
@@ -51,27 +51,25 @@ module tb_flushable_pipe_stage
                        input logic flush);
     logic accept;
     @(negedge clk_i);
-    upstream.valid = valid;
-    upstream.payload = payload;
-    downstream.ready = ready;
+    in.valid = valid;
+    in.payload = payload;
+    out.ready = ready;
     flush_i = flush;
     #1ns;
-    value_check#(logic)::equal(upstream.ready, !flush && (!full_model || ready),
-                               "Incorrect upstream ready");
-    value_check#(logic)::equal(downstream.valid, full_model && !flush,
-                               "Incorrect downstream valid");
-    if (downstream.valid) begin
-      value_check#(payload_t)::equal(downstream.payload, payload_model,
+    value_check#(logic)::equal(in.ready, !flush && (!full_model || ready), "Incorrect in ready");
+    value_check#(logic)::equal(out.valid, full_model && !flush, "Incorrect out valid");
+    if (out.valid) begin
+      value_check#(payload_t)::equal(out.payload, payload_model,
                                      "Payload ordering or stability failure");
     end
-    accept = upstream.valid && upstream.ready;
+    accept = in.valid && in.ready;
     @(posedge clk_i);
     if (flush) begin
       scoreboard.clear();
       full_model = 1'b0;
     end else begin
-      if (downstream.valid && downstream.ready) begin
-        scoreboard.check_actual(downstream.payload);
+      if (out.valid && out.ready) begin
+        scoreboard.check_actual(out.payload);
       end
       if (accept) begin
         scoreboard.push_expected(payload);
@@ -84,21 +82,19 @@ module tb_flushable_pipe_stage
       payload_model = payload;
     end
     #1ns;
-    value_check#(logic)::equal(downstream.valid, full_model && !flush,
-                               "Incorrect registered validity");
-    if (downstream.valid) begin
-      value_check#(payload_t)::equal(downstream.payload, payload_model,
-                                     "Incorrect registered payload");
+    value_check#(logic)::equal(out.valid, full_model && !flush, "Incorrect registered validity");
+    if (out.valid) begin
+      value_check#(payload_t)::equal(out.payload, payload_model, "Incorrect registered payload");
     end
   endtask
 
   initial begin
     clk_i = 1'b0;
-    scoreboard = new("flushable_pipe_stage");
+    scoreboard = new("flushable_pipe");
     rst_n_i = 1'b0;
-    upstream.valid = 1'b0;
-    upstream.payload = '0;
-    downstream.ready = 1'b0;
+    in.valid = 1'b0;
+    in.payload = '0;
+    out.ready = 1'b0;
     flush_i = 1'b0;
     full_model = 1'b0;
     payload_model = '0;
@@ -140,7 +136,7 @@ module tb_flushable_pipe_stage
     end
     cycle(1'b0, '0, 1'b1, 1'b0);
     cycle(1'b0, '0, 1'b1, 1'b0);
-    check(!downstream.valid, "Pipeline did not drain");
+    check(!out.valid, "Pipeline did not drain");
 
     // Finish
     scoreboard.check_empty();

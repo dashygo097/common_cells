@@ -1,4 +1,5 @@
 `include "cc/assertions.svh"
+`include "cc/registers.svh"
 
 module fifo
   import cc_pkg::*;
@@ -47,8 +48,6 @@ module fifo
       r_ptr_r   <= '0;
     end else begin
       if (push) begin
-        storage[w_ptr_r] <= in.payload;
-
         if (w_ptr_r == PtrWidth'(DEPTH - 1)) begin
           w_ptr_r <= '0;
         end else begin
@@ -73,6 +72,8 @@ module fifo
       endcase
     end
   end
+
+  `REG_CE(storage[w_ptr_r], in.payload, push)
 
   `CC_ASSERT_INIT(DepthPositive, DEPTH > 0)
   `CC_ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(payload_t))

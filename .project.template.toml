@@ -8,11 +8,5 @@ options = ["-full64", "-timescale=1ns/1ps", "-no_save"]
 seeds = [1, 2, 3]
 timeout_seconds = 120
 
-[flow.verify.vcs.verify_dynamic_addr_decode]
-top = "tb_dynamic_addr_decode"
-
-[flow.verify.vcs.verify_flushable_pipe_stage]
-top = "tb_flushable_pipe_stage"
-
-[flow.verify.vcs.verify_fifo]
-top = "tb_fifo"
+# [flow.verify.vcs.verify_xxx]
+# top = "tb_xxx"

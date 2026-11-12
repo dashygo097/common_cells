@@ -73,7 +73,6 @@ module dynamic_addr_decode
   `CC_ASSERT_INIT(IdTypeWidth, $bits(id_t) == ID_WIDTH)
   `CC_ASSERT_INIT(RuleIdWidth, RangeIdWidth == ID_WIDTH)
   `CC_ASSERT_INIT(RuleStartWidth, RangeStartWidth == ADDR_WIDTH)
-  `CC_ASSERT_INIT(RuleEndWidth,
-                  RangeEndWidth == ADDR_WIDTH || RangeEndWidth == ADDR_WIDTH + 1)
+  `CC_ASSERT_INIT(RuleEndWidth, RangeEndWidth == ADDR_WIDTH || RangeEndWidth == ADDR_WIDTH + 1)
 
 endmodule

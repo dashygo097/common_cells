@@ -1,4 +1,5 @@
 module tb_dynamic_addr_decode
+  import cc_pkg::*;
   import df_verify_pkg::*;
 #(
     parameter int unsigned ADDR_WIDTH = 32,
@@ -9,7 +10,7 @@ module tb_dynamic_addr_decode
 ) ();
   timeunit 1ns; timeprecision 1ps;
 
-  localparam int unsigned IdWidth  = cc_pkg::index_width(NUM_IDS);
+  localparam int unsigned IdWidth  = index_width(NUM_IDS);
   localparam int unsigned EndWidth = ADDR_WIDTH + int'(EXTENDED_END);
   typedef logic [ADDR_WIDTH-1:0] addr_t;
   typedef logic [ADDR_WIDTH:0] bound_t;
