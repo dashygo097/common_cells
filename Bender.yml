@@ -11,11 +11,15 @@ export_include_dirs:
 sources:
   - rtl/pkgs/cc_pkg.sv
   - rtl/protocols/**/*.sv
+  - rtl/registers/**/*.sv
   - rtl/buffers/**/*.sv
   - rtl/routers/**/*.sv
-  - target: all(verify, verify_dyn_addr_decode)
+  - target: all(verify, verify_register_bank)
     files:
-      - tests/tb_dyn_addr_decode.sv
+      - tests/tb_register_bank.sv
+  - target: all(verify, verify_addr_decode_dyn)
+    files:
+      - tests/tb_addr_decode_dyn.sv
   - target: all(verify, verify_flushable_pipe)
     files:
       - tests/tb_flushable_pipe.sv

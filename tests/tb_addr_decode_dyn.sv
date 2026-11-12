@@ -1,26 +1,23 @@
-module tb_dyn_addr_decode
+`include "cc/addr_decode.svh"
+
+module tb_addr_decode_dyn
   import cc_pkg::*;
   import df_verify_pkg::*;
 #(
     parameter int unsigned ADDR_WIDTH = 32,
     parameter int unsigned NUM_IDS = 3,
-    parameter int unsigned NUM_RULES = 4,
     parameter bit EXTENDED_END = 1'b1,
     parameter int unsigned RANDOM_CASES = 1000
 ) ();
   timeunit 1ns; timeprecision 1ps;
 
   localparam int unsigned IdWidth  = index_width(NUM_IDS);
-  localparam int unsigned EndWidth = ADDR_WIDTH + int'(EXTENDED_END);
+  localparam int unsigned EndWidth = ADDR_WIDTH + 1;
   typedef logic [ADDR_WIDTH-1:0] addr_t;
   typedef logic [ADDR_WIDTH:0] bound_t;
   typedef logic [ADDR_WIDTH+32:0] calculation_t;
   typedef logic [IdWidth-1:0] id_t;
-  typedef struct packed {
-    id_t id;
-    addr_t addr_start;
-    logic [EndWidth-1:0] addr_end;
-  } rule_t;
+  typedef `CC_ADDR_RANGE_TYPE(addr_t, id_t) rule_t;
   typedef struct packed {
     logic valid;
     id_t  id;
@@ -32,16 +29,14 @@ module tb_dyn_addr_decode
   localparam logic [IdWidth:0] IdLimit = {1'b1, {IdWidth{1'b0}}};
 
   addr_t addr_i;
-  rule_t [NUM_RULES-1:0] addr_map_i;
+  rule_t [NUM_IDS-1:0] addr_map_i;
   valid_if #(.payload_t(id_t)) decoded_id ();
   int unsigned hits;
   int unsigned rejects;
 
-  dyn_addr_decode #(
+  addr_decode_dyn #(
       .ADDR_WIDTH(ADDR_WIDTH),
-      .NUM_IDS(NUM_IDS),
-      .addr_range_t(rule_t),
-      .NUM_RULES(NUM_RULES)
+      .NUM_IDS(NUM_IDS)
   ) u_dut (
       .addr_i(addr_i),
       .addr_map_i(addr_map_i),
@@ -112,7 +107,7 @@ module tb_dyn_addr_decode
     hits = 0;
     rejects = 0;
     last_id = id_t'(NUM_IDS - 1);
-    check(ADDR_WIDTH > 0 && NUM_IDS > 0 && NUM_RULES > 0, "Widths/counts must be positive");
+    check(ADDR_WIDTH > 0 && NUM_IDS > 0, "Widths/counts must be positive");
     check(RANDOM_CASES > 0, "RANDOM_CASES must be positive");
 
     // Disabled maps and a single half-open interval, with explicit expected results.
@@ -130,7 +125,7 @@ module tb_dyn_addr_decode
     expect_decode(addr_t'(UpperEnd - 1'b1), 1'b1, last_id, "Highest included address");
     expect_decode('1, EXTENDED_END, EXTENDED_END ? last_id : '0, "Address-space upper boundary");
 
-    if (NUM_RULES >= 2) begin
+    if (NUM_IDS >= 2) begin
       // Adjacency is legal. Repeated IDs in disjoint ranges are also legal.
       addr_map_i = '0;
       set_rule(0, '0, '0, Split);
@@ -148,7 +143,7 @@ module tb_dyn_addr_decode
         expect_decode('0, 1'b1, '0, "Overlap elsewhere must not invalidate unique hit");
         expect_decode(addr_t'(Split), 1'b0, '0, "Overlapping destinations");
         // Keep the index legal even when this procedural branch is inactive.
-        addr_map_i[NUM_RULES > 1 ? 1 : 0].id = '0;
+        addr_map_i[NUM_IDS > 1 ? 1 : 0].id = '0;
         expect_decode(addr_t'(Split), 1'b0, '0, "Overlap is ambiguous even with equal IDs");
       end
     end
@@ -156,25 +151,25 @@ module tb_dyn_addr_decode
     // A reversed rule invalidates an unrelated, otherwise valid destination.
     addr_map_i = '0;
     set_rule(0, '0, '1, '0);
-    if (NUM_RULES >= 2) set_rule(1, last_id, '0, Split);
+    if (NUM_IDS >= 2) set_rule(1, last_id, '0, Split);
     expect_decode('0, 1'b0, '0, "Malformed rule invalidates the entire map");
     set_rule(0, '1, addr_t'(Split), Split);
-    expect_decode('0, NUM_RULES >= 2, NUM_RULES >= 2 ? last_id : '0,
+    expect_decode('0, NUM_IDS >= 2, NUM_IDS >= 2 ? last_id : '0,
                   "Zero-length rules ignore all other fields");
 
     // Non-power-of-two destination counts leave representable but invalid IDs.
     if (IdLimit > (IdWidth + 1)'(NUM_IDS)) begin
       addr_map_i = '0;
       set_rule(0, id_t'(NUM_IDS), '0, Split);
-      if (NUM_RULES >= 2) set_rule(1, last_id, addr_t'(Split), UpperEnd);
+      if (NUM_IDS >= 2) set_rule(1, last_id, addr_t'(Split), UpperEnd);
       expect_decode('0, 1'b0, '0, "Out-of-range destination ID");
-      if (NUM_RULES >= 2 && UpperEnd > Split)
+      if (NUM_IDS >= 2 && UpperEnd > Split)
         expect_decode(addr_t'(Split), 1'b0, '0, "Invalid ID on an unrelated active rule");
     end
     if (EXTENDED_END) begin
       addr_map_i = '0;
       set_rule(0, '0, '1, AddressLimit + 1'b1);
-      if (NUM_RULES >= 2) set_rule(1, last_id, '0, Split);
+      if (NUM_IDS >= 2) set_rule(1, last_id, '0, Split);
       expect_decode('0, 1'b0, '0, "End beyond address space invalidates the map");
     end
 
@@ -197,20 +192,20 @@ module tb_dyn_addr_decode
             if (limit < UpperEnd) limit++;
             else first--;
           end
-          set_rule($urandom_range(0, NUM_RULES - 1), id_t'($urandom_range(0, NUM_IDS - 1)),
+          set_rule($urandom_range(0, NUM_IDS - 1), id_t'($urandom_range(0, NUM_IDS - 1)),
                    addr_t'(first), limit);
         end
         1: begin
-          span = bound_t'(calculation_t'(UpperEnd) / calculation_t'(NUM_RULES));
-          for (int unsigned i = 0; i < NUM_RULES; i++) begin
+          span = bound_t'(calculation_t'(UpperEnd) / calculation_t'(NUM_IDS));
+          for (int unsigned i = 0; i < NUM_IDS; i++) begin
             first = span * bound_t'(i);
-            limit = i == NUM_RULES - 1 ? UpperEnd : span * (bound_t'(i) + 1'b1);
+            limit = i == NUM_IDS - 1 ? UpperEnd : span * (bound_t'(i) + 1'b1);
             if ($urandom_range(0, 3) != 0)
               set_rule(i, id_t'($urandom_range(0, NUM_IDS - 1)), addr_t'(first), limit);
           end
         end
         default: begin
-          for (int unsigned i = 0; i < NUM_RULES; i++) begin
+          for (int unsigned i = 0; i < NUM_IDS; i++) begin
             first = bound_t'(random_address());
             if ($urandom_range(0, 3) == 0) limit = first;
             else
@@ -220,7 +215,7 @@ module tb_dyn_addr_decode
         end
       endcase
       check_model(random_address(), "Random map/address");
-      index = $urandom_range(0, NUM_RULES - 1);
+      index = $urandom_range(0, NUM_IDS - 1);
       check_model(addr_map_i[index].addr_start, "Random lower endpoint");
       limit = bound_t'(addr_map_i[index].addr_end);
       if (limit > 0 && limit <= AddressLimit)
@@ -233,10 +228,10 @@ module tb_dyn_addr_decode
     // Small-width regression configurations can sweep every address affordably.
     if (ADDR_WIDTH <= 8) begin
       addr_map_i = '0;
-      span = bound_t'(calculation_t'(UpperEnd) / calculation_t'(NUM_RULES));
-      for (int unsigned i = 0; i < NUM_RULES; i++) begin
+      span = bound_t'(calculation_t'(UpperEnd) / calculation_t'(NUM_IDS));
+      for (int unsigned i = 0; i < NUM_IDS; i++) begin
         first = span * bound_t'(i);
-        limit = i == NUM_RULES - 1 ? UpperEnd : span * (bound_t'(i) + 1'b1);
+        limit = i == NUM_IDS - 1 ? UpperEnd : span * (bound_t'(i) + 1'b1);
         set_rule(i, id_t'(i % NUM_IDS), addr_t'(first), limit);
       end
       for (bound_t address = '0; address < AddressLimit; address++)
