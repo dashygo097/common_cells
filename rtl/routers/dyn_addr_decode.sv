@@ -1,6 +1,6 @@
 `include "cc/assertions.svh"
 
-module dynamic_addr_decode
+module dyn_addr_decode
   import cc_pkg::*;
 #(
     parameter int unsigned ADDR_WIDTH = 32,
@@ -20,8 +20,7 @@ module dynamic_addr_decode
     input addr_t                         addr_i,
     input addr_range_t [NUM_RULES - 1:0] addr_map_i,
 
-    output logic valid_o,
-    output id_t  id_o
+    valid_if.source result
 );
   typedef logic [ADDR_WIDTH:0] bound_t;
   typedef logic [ID_WIDTH:0] id_check_t;
@@ -40,8 +39,8 @@ module dynamic_addr_decode
     map_valid = 1'b1;
     matched = 1'b0;
     ambiguous = 1'b0;
-    valid_o = 1'b0;
-    id_o = '0;
+    result.valid = 1'b0;
+    result.payload = '0;
 
     for (int unsigned i = 0; i < NUM_RULES; i++) begin
       if (bound_t'(addr_map_i[i].addr_start) != bound_t'(addr_map_i[i].addr_end)) begin
@@ -54,14 +53,14 @@ module dynamic_addr_decode
             (bound_t'(addr_i) < bound_t'(addr_map_i[i].addr_end))) begin
           ambiguous = ambiguous || matched;
           matched = 1'b1;
-          id_o = id_t'(addr_map_i[i].id);
+          result.payload = id_t'(addr_map_i[i].id);
         end
       end
     end
 
-    valid_o = map_valid && matched && !ambiguous;
-    if (!valid_o) begin
-      id_o = '0;
+    result.valid = map_valid && matched && !ambiguous;
+    if (!result.valid) begin
+      result.payload = '0;
     end
   end
 
@@ -71,6 +70,7 @@ module dynamic_addr_decode
   `CC_ASSERT_INIT(IdWidthSufficient, ID_WIDTH >= index_width(NUM_IDS))
   `CC_ASSERT_INIT(AddressTypeWidth, $bits(addr_t) == ADDR_WIDTH)
   `CC_ASSERT_INIT(IdTypeWidth, $bits(id_t) == ID_WIDTH)
+  `CC_ASSERT_INIT(OutputPayloadWidth, $bits(result.payload) == ID_WIDTH)
   `CC_ASSERT_INIT(RuleIdWidth, RangeIdWidth == ID_WIDTH)
   `CC_ASSERT_INIT(RuleStartWidth, RangeStartWidth == ADDR_WIDTH)
   `CC_ASSERT_INIT(RuleEndWidth, RangeEndWidth == ADDR_WIDTH || RangeEndWidth == ADDR_WIDTH + 1)

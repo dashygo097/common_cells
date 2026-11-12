@@ -1,4 +1,4 @@
-module tb_dynamic_addr_decode
+module tb_dyn_addr_decode
   import cc_pkg::*;
   import df_verify_pkg::*;
 #(
@@ -33,12 +33,11 @@ module tb_dynamic_addr_decode
 
   addr_t addr_i;
   rule_t [NUM_RULES-1:0] addr_map_i;
-  logic valid_o;
-  id_t id_o;
+  valid_if #(.payload_t(id_t)) decoded_id ();
   int unsigned hits;
   int unsigned rejects;
 
-  dynamic_addr_decode #(
+  dyn_addr_decode #(
       .ADDR_WIDTH(ADDR_WIDTH),
       .NUM_IDS(NUM_IDS),
       .addr_range_t(rule_t),
@@ -46,8 +45,7 @@ module tb_dynamic_addr_decode
   ) u_dut (
       .addr_i(addr_i),
       .addr_map_i(addr_map_i),
-      .valid_o(valid_o),
-      .id_o(id_o)
+      .result(decoded_id)
   );
 
   task automatic set_rule(input int unsigned index, input id_t id, input addr_t first,
@@ -81,8 +79,10 @@ module tb_dynamic_addr_decode
                                input string message);
     addr_i = address;
     #1ns;
-    value_check#(logic)::equal(valid_o, valid, $sformatf("%s: addr=%h validity", message, address));
-    value_check#(id_t)::equal(id_o, id, $sformatf("%s: addr=%h destination", message, address));
+    value_check#(logic)::equal(decoded_id.valid, valid, $sformatf(
+                               "%s: addr=%h validity", message, address));
+    value_check#(id_t)::equal(decoded_id.payload, id, $sformatf(
+                              "%s: addr=%h destination", message, address));
     if (valid) hits++;
     else rejects++;
   endtask
@@ -147,7 +147,8 @@ module tb_dynamic_addr_decode
         set_rule(0, '0, '0, UpperEnd);
         expect_decode('0, 1'b1, '0, "Overlap elsewhere must not invalidate unique hit");
         expect_decode(addr_t'(Split), 1'b0, '0, "Overlapping destinations");
-        addr_map_i[1].id = '0;
+        // Keep the index legal even when this procedural branch is inactive.
+        addr_map_i[NUM_RULES > 1 ? 1 : 0].id = '0;
         expect_decode(addr_t'(Split), 1'b0, '0, "Overlap is ambiguous even with equal IDs");
       end
     end

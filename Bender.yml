@@ -13,9 +13,9 @@ sources:
   - rtl/protocols/**/*.sv
   - rtl/buffers/**/*.sv
   - rtl/routers/**/*.sv
-  - target: all(verify, verify_dynamic_addr_decode)
+  - target: all(verify, verify_dyn_addr_decode)
     files:
-      - tests/tb_dynamic_addr_decode.sv
+      - tests/tb_dyn_addr_decode.sv
   - target: all(verify, verify_flushable_pipe)
     files:
       - tests/tb_flushable_pipe.sv
