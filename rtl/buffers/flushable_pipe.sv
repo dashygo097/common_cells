@@ -28,9 +28,9 @@ module flushable_pipe
   `REG_CE_CLR_ARSTN(valid_r, in.valid, in.ready, flush_i, 1'b0)
   `REG_CE_CLR(payload_r, in.payload, in.ready && in.valid, flush_i, '0)
 
-  `CC_ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(payload_t))
-  `CC_ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(payload_t))
-  `CC_ASSERT(OutputStableUnlessFlushed,
+  `ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(payload_t))
+  `ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(payload_t))
+  `ASSERT(OutputStableUnlessFlushed,
              out.valid && !out.ready |=> flush_i || (out.valid && $stable(out.payload)))
 
 endmodule

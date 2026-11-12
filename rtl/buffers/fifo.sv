@@ -75,13 +75,13 @@ module fifo
 
   `REG_CE(storage[w_ptr_r], in.payload, push)
 
-  `CC_ASSERT_INIT(DepthPositive, DEPTH > 0)
-  `CC_ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(payload_t))
-  `CC_ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(payload_t))
+  `ASSERT_INIT(DepthPositive, DEPTH > 0)
+  `ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(payload_t))
+  `ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(payload_t))
 
-  `CC_ASSERT(CountInRange, counter_r <= CntWidth'(DEPTH))
-  `CC_ASSERT(WritePointerInRange, {1'b0, w_ptr_r} < (PtrWidth + 1)'(DEPTH))
-  `CC_ASSERT(ReadPointerInRange, {1'b0, r_ptr_r} < (PtrWidth + 1)'(DEPTH))
-  `CC_ASSERT(OutputStable, out.valid && !out.ready |=> out.valid && $stable(out.payload))
+  `ASSERT(CountInRange, counter_r <= CntWidth'(DEPTH))
+  `ASSERT(WritePointerInRange, {1'b0, w_ptr_r} < (PtrWidth + 1)'(DEPTH))
+  `ASSERT(ReadPointerInRange, {1'b0, r_ptr_r} < (PtrWidth + 1)'(DEPTH))
+  `ASSERT(OutputStable, out.valid && !out.ready |=> out.valid && $stable(out.payload))
 
 endmodule

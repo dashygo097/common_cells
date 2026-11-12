@@ -58,14 +58,14 @@ module addr_decode_dyn
     end
   end
 
-  `CC_ASSERT_INIT(AddressWidthPositive, ADDR_WIDTH > 0)
-  `CC_ASSERT_INIT(IdCountPositive, NUM_IDS > 0)
-  `CC_ASSERT_INIT(IdWidthSufficient, IdWidth >= index_width(NUM_IDS))
-  `CC_ASSERT_INIT(AddressTypeWidth, $bits(addr_t) == ADDR_WIDTH)
-  `CC_ASSERT_INIT(IdTypeWidth, $bits(id_t) == IdWidth)
-  `CC_ASSERT_INIT(OutputPayloadWidth, $bits(result.payload) == IdWidth)
-  `CC_ASSERT_INIT(RuleIdWidth, RangeIdWidth == IdWidth)
-  `CC_ASSERT_INIT(RuleStartWidth, RangeStartWidth == ADDR_WIDTH)
-  `CC_ASSERT_INIT(RuleEndWidth, RangeEndWidth == ADDR_WIDTH || RangeEndWidth == ADDR_WIDTH + 1)
+  `ASSERT_INIT(AddressWidthPositive, ADDR_WIDTH > 0)
+  `ASSERT_INIT(IdCountPositive, NUM_IDS > 0)
+  `ASSERT_INIT(IdWidthSufficient, IdWidth >= index_width(NUM_IDS))
+  `ASSERT_INIT(AddressTypeWidth, $bits(addr_t) == ADDR_WIDTH)
+  `ASSERT_INIT(IdTypeWidth, $bits(id_t) == IdWidth)
+  `ASSERT_INIT(OutputPayloadWidth, $bits(result.payload) == IdWidth)
+  `ASSERT_INIT(RuleIdWidth, RangeIdWidth == IdWidth)
+  `ASSERT_INIT(RuleStartWidth, RangeStartWidth == ADDR_WIDTH)
+  `ASSERT_INIT(RuleEndWidth, RangeEndWidth == ADDR_WIDTH || RangeEndWidth == ADDR_WIDTH + 1)
 
 endmodule

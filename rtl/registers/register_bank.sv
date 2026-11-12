@@ -87,26 +87,26 @@ module register_bank
 
     `REG_CE_ARSTN(registers_r[i], next_value, access_fire && selected[i], REG_CFG[i].reset_value)
 
-    `CC_ASSERT_INIT(ConfigKnown, !$isunknown(REG_CFG[i]))
-    `CC_ASSERT_INIT(OffsetAligned, calc_addr_t'(REG_CFG[i].offset) % calc_addr_t'(BytesPerReg) == 0)
-    `CC_ASSERT_INIT(AddressInRange, RegEnd <= AddressLimit)
-    `CC_ASSERT_INIT(RwW1cDisjoint, (REG_CFG[i].rw_mask & REG_CFG[i].w1c_mask) == '0)
-    `CC_ASSERT_INIT(RwW1sDisjoint, (REG_CFG[i].rw_mask & REG_CFG[i].w1s_mask) == '0)
-    `CC_ASSERT_INIT(W1cW1sDisjoint, (REG_CFG[i].w1c_mask & REG_CFG[i].w1s_mask) == '0)
-    `CC_ASSERT_INIT(ReadClearReadable, (REG_CFG[i].rc_mask & ~REG_CFG[i].read_mask) == '0)
+    `ASSERT_INIT(ConfigKnown, !$isunknown(REG_CFG[i]))
+    `ASSERT_INIT(OffsetAligned, calc_addr_t'(REG_CFG[i].offset) % calc_addr_t'(BytesPerReg) == 0)
+    `ASSERT_INIT(AddressInRange, RegEnd <= AddressLimit)
+    `ASSERT_INIT(RwW1cDisjoint, (REG_CFG[i].rw_mask & REG_CFG[i].w1c_mask) == '0)
+    `ASSERT_INIT(RwW1sDisjoint, (REG_CFG[i].rw_mask & REG_CFG[i].w1s_mask) == '0)
+    `ASSERT_INIT(W1cW1sDisjoint, (REG_CFG[i].w1c_mask & REG_CFG[i].w1s_mask) == '0)
+    `ASSERT_INIT(ReadClearReadable, (REG_CFG[i].rc_mask & ~REG_CFG[i].read_mask) == '0)
 
     for (genvar j = i + 1; j < NUM_REGS; j++) begin : gen_check_unique
-      `CC_ASSERT_INIT(OffsetsUnique, REG_CFG[i].offset != REG_CFG[j].offset)
+      `ASSERT_INIT(OffsetsUnique, REG_CFG[i].offset != REG_CFG[j].offset)
     end
   end
 
-  `CC_ASSERT_INIT(AddressWidthPositive, ADDR_WIDTH > 0)
-  `CC_ASSERT_INIT(DataWidthValid, DATA_WIDTH > 0 && DATA_WIDTH % 8 == 0)
-  `CC_ASSERT_INIT(RegisterCountPositive, NUM_REGS > 0)
-  `CC_ASSERT_INIT(BaseAligned, calc_addr_t'(BASE_ADDR) % calc_addr_t'(BytesPerReg) == 0)
-  `CC_ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(req_t))
-  `CC_ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(resp_t))
-  `CC_ASSERT(OutputStable, out.valid && !out.ready |=> out.valid && $stable(out.payload))
-  `CC_ASSERT_KNOWN_IF(ResponseKnown, out.payload, out.valid)
+  `ASSERT_INIT(AddressWidthPositive, ADDR_WIDTH > 0)
+  `ASSERT_INIT(DataWidthValid, DATA_WIDTH > 0 && DATA_WIDTH % 8 == 0)
+  `ASSERT_INIT(RegisterCountPositive, NUM_REGS > 0)
+  `ASSERT_INIT(BaseAligned, calc_addr_t'(BASE_ADDR) % calc_addr_t'(BytesPerReg) == 0)
+  `ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(req_t))
+  `ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(resp_t))
+  `ASSERT(OutputStable, out.valid && !out.ready |=> out.valid && $stable(out.payload))
+  `ASSERT_KNOWN_IF(ResponseKnown, out.payload, out.valid)
 
 endmodule

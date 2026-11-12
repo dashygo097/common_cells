@@ -15,5 +15,5 @@ module handshake_join #(
     ready_o = {NUM_INPUTS{valid_o && ready_i}};
   end
 
-  `CC_ASSERT_INIT(NumInputsPositive, NUM_INPUTS > 0)
+  `ASSERT_INIT(NumInputsPositive, NUM_INPUTS > 0)
 endmodule
