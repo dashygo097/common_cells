@@ -30,7 +30,7 @@ module flushable_pipe
 
   `ASSERT_INIT(InputPayloadWidth, $bits(in.payload) == $bits(payload_t))
   `ASSERT_INIT(OutputPayloadWidth, $bits(out.payload) == $bits(payload_t))
-  `ASSERT(OutputStableUnlessFlushed,
-             out.valid && !out.ready |=> flush_i || (out.valid && $stable(out.payload)))
+  `ASSERT(OutputStableUnlessFlushed, out.valid && !out.ready |=> flush_i || (out.valid && $stable
+                                     (out.payload)))
 
 endmodule
