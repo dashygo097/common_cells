@@ -20,15 +20,4 @@
     logic error; \
   }
 
-`define CC_REG_BANK_CFG_TYPE(_addr_t, _data_t) \
-  struct packed { \
-    _addr_t offset; \
-    _data_t reset_value; \
-    _data_t read_mask; \
-    _data_t rw_mask; \
-    _data_t w1c_mask; \
-    _data_t w1s_mask; \
-    _data_t rc_mask; \
-  }
-
 `endif  // CC_REGISTER_BANK_SVH_
