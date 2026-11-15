@@ -26,7 +26,7 @@ module register_bank
   localparam int unsigned BytesPerReg = DATA_WIDTH >= 8 ? DATA_WIDTH / 8 : 1;
   localparam int unsigned CalcWidth   = (ADDR_WIDTH > 32 ? ADDR_WIDTH : 32) + 2;
   typedef logic [CalcWidth - 1:0] calc_addr_t;
-  localparam calc_addr_t AddressLimit = calc_addr_t'(1) << ADDR_WIDTH;
+  localparam calc_addr_t AddressLimit = {1'b1, {ADDR_WIDTH{1'b0}}};
 
   req_t request;
   resp_t response_d;
