@@ -2,9 +2,7 @@
 `include "cc/registers.svh"
 `include "cc/register_bank.svh"
 
-module register_bank
-  import cc_pkg::*;
-#(
+module register_bank #(
     parameter int unsigned ADDR_WIDTH = 32,
     parameter int unsigned DATA_WIDTH = 32,
     parameter int unsigned NUM_REGS = 1,
@@ -36,6 +34,7 @@ module register_bank
   logic [NUM_REGS - 1:0] selected;
   data_t [NUM_REGS - 1:0] registers_r;
   data_t byte_mask;
+  data_t read_data;
 
   always_comb begin
     request = req_t'(in.payload);
@@ -47,18 +46,18 @@ module register_bank
     out.valid = response_valid_r;
     out.payload = response_r;
 
-    byte_mask = '0;
     for (int unsigned b = 0; b < DATA_WIDTH / 8; b++) begin
       byte_mask[b*8+:8] = {8{request.strb[b]}};
     end
 
-    response_d = '0;
-    response_d.error = !(|selected);
+    read_data = '0;
     for (int unsigned i = 0; i < NUM_REGS; i++) begin
       if (selected[i] && !request.write) begin
-        response_d.data = registers_r[i] & REG_CFG[i].read_mask;
+        read_data = registers_r[i] & REG_CFG[i].read_mask;
       end
     end
+
+    response_d = '{data: read_data, error: !(|selected), default: '0};
   end
 
   `REG_CE_ARSTN(response_valid_r, in.valid, in.ready, 1'b0)
@@ -76,10 +75,12 @@ module register_bank
 
     always_comb begin
       if (request.write) begin
+        // spyglass disable_block W415a
         next_value = (registers_r[i] & ~(REG_CFG[i].rw_mask & byte_mask)) |
             (request.data & REG_CFG[i].rw_mask & byte_mask);
         next_value &= ~(request.data & REG_CFG[i].w1c_mask & byte_mask);
         next_value |= request.data & REG_CFG[i].w1s_mask & byte_mask;
+        // spyglass enable_block W415a
       end else begin
         next_value = registers_r[i] & ~REG_CFG[i].rc_mask;
       end

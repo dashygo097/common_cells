@@ -1,9 +1,7 @@
 `include "cc/assertions.svh"
 `include "cc/registers.svh"
 
-module fifo
-  import cc_pkg::*;
-#(
+module fifo #(
     parameter type payload_t = logic,
     parameter int unsigned DEPTH = 4
 ) (
@@ -16,8 +14,8 @@ module fifo
     output logic empty_o,
     output logic full_o
 );
-  localparam int unsigned PtrWidth = index_width(DEPTH);
-  localparam int unsigned CntWidth = index_width(DEPTH + 1);
+  localparam int unsigned PtrWidth = cc_pkg::index_width(DEPTH);
+  localparam int unsigned CntWidth = cc_pkg::index_width(DEPTH + 1);
 
   payload_t storage[DEPTH];
 

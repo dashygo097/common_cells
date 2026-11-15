@@ -1,9 +1,7 @@
 `include "cc/assertions.svh"
 `include "cc/registers.svh"
 
-module flushable_pipe
-  import cc_pkg::*;
-#(
+module flushable_pipe #(
     parameter type payload_t = logic
 ) (
     input logic clk_i,
