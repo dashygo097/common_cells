@@ -7,6 +7,10 @@ module register_bank #(
     parameter int unsigned DATA_WIDTH = 32,
     parameter int unsigned NUM_REGS   = 1,
 
+    localparam type addr_t = logic [ADDR_WIDTH - 1:0],
+    localparam type data_t = logic [DATA_WIDTH - 1:0],
+    localparam type strb_t = logic [DATA_WIDTH / 8 - 1:0],
+
     // FIXME: DC compatibility: C'mon i have to do this otherwise it raises
     // ELAB-210: integer overflow.
     // original impl is typed: parameter reg_cfg_t [NUM_REGS - 1: 0] REG_CFG
@@ -18,7 +22,10 @@ module register_bank #(
     parameter logic [NUM_REGS - 1:0][DATA_WIDTH - 1:0] RW_CFG     = '0,
     parameter logic [NUM_REGS - 1:0][DATA_WIDTH - 1:0] W1C_CFG    = '0,
     parameter logic [NUM_REGS - 1:0][DATA_WIDTH - 1:0] W1S_CFG    = '0,
-    parameter logic [NUM_REGS - 1:0][DATA_WIDTH - 1:0] RC_CFG     = '0
+    parameter logic [NUM_REGS - 1:0][DATA_WIDTH - 1:0] RC_CFG     = '0,
+
+    localparam type req_t  = `CC_REG_BANK_REQ_TYPE(addr_t, data_t, strb_t),
+    localparam type resp_t = `CC_REG_BANK_RESP_TYPE(data_t)
 ) (
     input logic clk_i,
     input logic rst_n_i,
@@ -26,15 +33,6 @@ module register_bank #(
     handshake_if.sink   in,
     handshake_if.source out
 );
-
-  // TYPES
-  typedef logic [ADDR_WIDTH - 1:0] addr_t;
-  typedef logic [DATA_WIDTH - 1:0] data_t;
-  typedef logic [DATA_WIDTH / 8 - 1:0] strb_t;
-
-  typedef `CC_REG_BANK_REQ_TYPE(addr_t, data_t, strb_t) req_t;
-  typedef `CC_REG_BANK_RESP_TYPE(data_t) resp_t;
-
   localparam int unsigned BytesPerReg = DATA_WIDTH >= 8 ? DATA_WIDTH / 8 : 1;
   localparam int unsigned CalcWidth   = (ADDR_WIDTH > 32 ? ADDR_WIDTH : 32) + 2;
 
