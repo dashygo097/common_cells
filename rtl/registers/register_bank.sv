@@ -9,7 +9,7 @@ module register_bank #(
     localparam type addr_t = logic [ADDR_WIDTH - 1:0],
     localparam type data_t = logic [DATA_WIDTH - 1:0],
     localparam type strb_t = logic [DATA_WIDTH / 8 - 1:0],
-    localparam type reg_cfg_t = `CC_REG_BANK_CFG_TYPE(addr_t, data_t),
+    parameter type reg_cfg_t = `CC_REG_BANK_CFG_TYPE(addr_t, data_t),
     parameter addr_t BASE_ADDR = '0,
     parameter reg_cfg_t [NUM_REGS - 1:0] REG_CFG = '0,
     localparam type req_t = `CC_REG_BANK_REQ_TYPE(addr_t, data_t, strb_t),
