@@ -1,6 +1,4 @@
-module tb_fifo
-  import df_verify_pkg::*;
-#(
+module tb_fifo #(
     parameter int unsigned DEPTH = 4,
     parameter int unsigned RANDOM_CYCLES = 1000
 ) ();
@@ -37,15 +35,15 @@ module tb_fifo
   always #5ns clk_i = ~clk_i;
 
   task automatic check_output();
-    value_check#(logic)::equal(empty_o, expected.size() == 0, $sformatf(
-                               "Cycle %0d: incorrect empty flag", cycles));
-    value_check#(logic)::equal(full_o, expected.size() == DEPTH, $sformatf(
-                               "Cycle %0d: incorrect full flag", cycles));
-    value_check#(logic)::equal(downstream.valid, expected.size() != 0, $sformatf(
-                               "Cycle %0d: incorrect output validity", cycles));
+    df_verify_pkg::value_check#(logic)::equal(empty_o, expected.size() == 0, $sformatf(
+                                              "Cycle %0d: incorrect empty flag", cycles));
+    df_verify_pkg::value_check#(logic)::equal(full_o, expected.size() == DEPTH, $sformatf(
+                                              "Cycle %0d: incorrect full flag", cycles));
+    df_verify_pkg::value_check#(logic)::equal(downstream.valid, expected.size() != 0, $sformatf(
+                                              "Cycle %0d: incorrect output validity", cycles));
     if (expected.size() != 0) begin
-      value_check#(packet_t)::equal(downstream.payload, expected[0], $sformatf(
-                                    "Cycle %0d: output ordering/stability", cycles));
+      df_verify_pkg::value_check#(packet_t)::equal(downstream.payload, expected[0], $sformatf(
+                                                   "Cycle %0d: output ordering/stability", cycles));
     end
   endtask
 
@@ -60,7 +58,7 @@ module tb_fifo
     expected.delete();
     #1ns;
     check_output();
-    wait_cycles(clk_i, 2);
+    df_verify_pkg::wait_cycles(clk_i, 2);
     @(negedge clk_i);
     rst_n_i = 1'b1;
     #1ns;
@@ -80,8 +78,8 @@ module tb_fifo
     check_output();
     take_output = (expected.size() != 0) && ready;
     can_accept  = (expected.size() < DEPTH) || take_output;
-    value_check#(logic)::equal(upstream.ready, can_accept, $sformatf(
-                               "Cycle %0d: incorrect input readiness", cycles));
+    df_verify_pkg::value_check#(logic)::equal(upstream.ready, can_accept, $sformatf(
+                                              "Cycle %0d: incorrect input readiness", cycles));
     accepted = valid && can_accept;
     if (valid && !can_accept) stalls++;
     if (accepted && take_output) replacements++;
@@ -99,78 +97,79 @@ module tb_fifo
     end
     cycles++;
     #1ns;
-    check(expected.size() <= DEPTH, "Reference occupancy exceeded FIFO capacity");
+    df_verify_pkg::check(expected.size() <= DEPTH, "Reference occupancy exceeded FIFO capacity");
     check_output();
   endtask
 
-  initial begin
+  task automatic test_empty_reads();
     logic accepted;
-    logic pending;
-    packet_t pending_payload;
-
-    clk_i = 1'b0;
-    rst_n_i = 1'b0;
-    upstream.valid = 1'b0;
-    upstream.payload = '0;
-    downstream.ready = 1'b0;
-    cycles = 0;
-    pushes = 0;
-    pops = 0;
-    replacements = 0;
-    stalls = 0;
-    check(DEPTH > 0, "DEPTH must be positive");
-    check(RANDOM_CYCLES > 0, "RANDOM_CYCLES must be positive");
-
     // Empty reads must not consume data or change occupancy.
     reset_dut();
     repeat (3) cycle(1'b0, '0, 1'b1, accepted);
+  endtask
 
+  task automatic test_capacity_and_replacement();
+    logic accepted;
     // All DEPTH entries are usable; an additional write must be backpressured.
     for (int unsigned i = 0; i < DEPTH; i++) begin
       cycle(1'b1, packet_t'(i), 1'b0, accepted);
-      check(accepted, "FIFO rejected a write before reaching capacity");
+      df_verify_pkg::check(accepted, "FIFO rejected a write before reaching capacity");
     end
     repeat (20) begin
       cycle(1'b1, packet_t'(32'hdeadbeef), 1'b0, accepted);
-      check(!accepted, "Full FIFO accepted a write without a simultaneous read");
+      df_verify_pkg::check(!accepted, "Full FIFO accepted a write without a simultaneous read");
     end
 
     // Complete the producer word held during the full stall before changing data.
     cycle(1'b1, packet_t'(32'hdeadbeef), 1'b1, accepted);
-    check(accepted && full_o, "Full FIFO did not accept its stalled producer word");
+    df_verify_pkg::check(accepted && full_o, "Full FIFO did not accept its stalled producer word");
 
     // A full FIFO must accept a replacement on every pop, including DEPTH=1.
     // Run long enough to wrap both pointers repeatedly for non-power-of-two depths.
     for (int unsigned i = 0; i < 4 * DEPTH + 5; i++) begin
       cycle(1'b1, packet_t'(32'h10000000 + i), 1'b1, accepted);
-      check(accepted && full_o, "Full FIFO failed to sustain simultaneous push/pop");
+      df_verify_pkg::check(accepted && full_o, "Full FIFO failed to sustain simultaneous push/pop");
     end
     repeat (DEPTH) cycle(1'b0, '0, 1'b1, accepted);
-    check(empty_o, "FIFO did not become empty after draining DEPTH entries");
+    df_verify_pkg::check(empty_o, "FIFO did not become empty after draining DEPTH entries");
     repeat (3) cycle(1'b0, '0, 1'b1, accepted);
+  endtask
 
+  task automatic test_reset_occupied();
+    logic accepted;
     // Reset discards occupied storage and must restore the empty interface.
     repeat (DEPTH) cycle(1'b1, packet_t'(32'ha5a55a5a), 1'b0, accepted);
     reset_dut();
     cycle(1'b0, '0, 1'b1, accepted);
+  endtask
 
+  task automatic test_wraparound();
+    logic accepted;
     // Repeated empty/full transitions exercise wraparound independently of streaming.
     repeat (3) begin
       for (int unsigned i = 0; i < DEPTH; i++) begin
         cycle(1'b1, packet_t'(~i), 1'b0, accepted);
-        check(accepted, "FIFO rejected a burst write");
+        df_verify_pkg::check(accepted, "FIFO rejected a burst write");
       end
       repeat (DEPTH) cycle(1'b0, '0, 1'b1, accepted);
     end
+  endtask
 
+  task automatic test_continuous_traffic();
+    logic accepted;
     // Maintain one outstanding word with continuous traffic.
     cycle(1'b1, packet_t'(32'h12345678), 1'b0, accepted);
     for (int unsigned i = 0; i < 3 * DEPTH + 20; i++) begin
       cycle(1'b1, packet_t'(i), 1'b1, accepted);
-      check(accepted, "FIFO inserted a bubble into continuous traffic");
+      df_verify_pkg::check(accepted, "FIFO inserted a bubble into continuous traffic");
     end
     cycle(1'b0, '0, 1'b1, accepted);
+  endtask
 
+  task automatic test_random_traffic();
+    logic accepted;
+    logic pending;
+    packet_t pending_payload;
     // The producer holds valid/payload until accepted, even across long stalls.
     pending = 1'b0;
     pending_payload = '0;
@@ -192,9 +191,36 @@ module tb_fifo
       cycle(pending, pending_payload, 1'b1, accepted);
       if (accepted) pending = 1'b0;
     end
-    check(!pending && expected.size() == 0 && empty_o, "FIFO did not drain");
-    check(pushes > 0 && pops > 0, "No input/output transfers checked");
-    check(stalls > 0 && replacements > 0, "Missing backpressure or replacement coverage");
-    finish_test();
+    df_verify_pkg::check(!pending && expected.size() == 0 && empty_o, "FIFO did not drain");
+  endtask
+
+  task automatic check_results();
+    df_verify_pkg::check(pushes > 0 && pops > 0, "No input/output transfers checked");
+    df_verify_pkg::check(stalls > 0 && replacements > 0,
+                         "Missing backpressure or replacement coverage");
+  endtask
+
+  initial begin
+    clk_i = 1'b0;
+    rst_n_i = 1'b0;
+    upstream.valid = 1'b0;
+    upstream.payload = '0;
+    downstream.ready = 1'b0;
+    cycles = 0;
+    pushes = 0;
+    pops = 0;
+    replacements = 0;
+    stalls = 0;
+    df_verify_pkg::check(DEPTH > 0, "DEPTH must be positive");
+    df_verify_pkg::check(RANDOM_CYCLES > 0, "RANDOM_CYCLES must be positive");
+
+    test_empty_reads();
+    test_capacity_and_replacement();
+    test_reset_occupied();
+    test_wraparound();
+    test_continuous_traffic();
+    test_random_traffic();
+    check_results();
+    df_verify_pkg::finish_test();
   end
 endmodule

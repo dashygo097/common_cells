@@ -1,6 +1,4 @@
-module tb_flushable_pipe
-  import df_verify_pkg::*;
-#(
+module tb_flushable_pipe #(
     parameter int unsigned RANDOM_CYCLES = 1000
 ) ();
 
@@ -16,7 +14,7 @@ module tb_flushable_pipe
   handshake_if #(.payload_t(payload_t)) out ();
   logic full_model;
   payload_t payload_model;
-  ordered_scoreboard #(payload_t) scoreboard;
+  df_verify_pkg::ordered_scoreboard #(payload_t) scoreboard;
 
   flushable_pipe #(
       .payload_t(payload_t)
@@ -41,8 +39,8 @@ module tb_flushable_pipe
     payload_model = '0;
     scoreboard.clear();
     #1ns;
-    check(!out.valid, "Reset must clear out validity");
-    wait_cycles(clk_i, 2);
+    df_verify_pkg::check(!out.valid, "Reset must clear out validity");
+    df_verify_pkg::wait_cycles(clk_i, 2);
     @(negedge clk_i);
     rst_n_i = 1'b1;
   endtask
@@ -56,11 +54,13 @@ module tb_flushable_pipe
     out.ready = ready;
     flush_i = flush;
     #1ns;
-    value_check#(logic)::equal(in.ready, !flush && (!full_model || ready), "Incorrect in ready");
-    value_check#(logic)::equal(out.valid, full_model && !flush, "Incorrect out valid");
+    df_verify_pkg::value_check#(logic)::equal(in.ready, !flush && (!full_model || ready),
+                                              "Incorrect in ready");
+    df_verify_pkg::value_check#(logic)::equal(out.valid, full_model && !flush,
+                                              "Incorrect out valid");
     if (out.valid) begin
-      value_check#(payload_t)::equal(out.payload, payload_model,
-                                     "Payload ordering or stability failure");
+      df_verify_pkg::value_check#(payload_t)::equal(out.payload, payload_model,
+                                                    "Payload ordering or stability failure");
     end
     accept = in.valid && in.ready;
     @(posedge clk_i);
@@ -82,10 +82,67 @@ module tb_flushable_pipe
       payload_model = payload;
     end
     #1ns;
-    value_check#(logic)::equal(out.valid, full_model && !flush, "Incorrect registered validity");
+    df_verify_pkg::value_check#(logic)::equal(out.valid, full_model && !flush,
+                                              "Incorrect registered validity");
     if (out.valid) begin
-      value_check#(payload_t)::equal(out.payload, payload_model, "Incorrect registered payload");
+      df_verify_pkg::value_check#(payload_t)::equal(out.payload, payload_model,
+                                                    "Incorrect registered payload");
     end
+  endtask
+
+  task automatic test_reset_empty();
+    // Reset an empty stage and verify idle operation.
+    reset_dut();
+    cycle(1'b0, '0, 1'b1, 1'b0);
+  endtask
+
+  task automatic test_reset_occupied();
+    // Reset an occupied stage and discard the pending payload.
+    cycle(1'b1, payload_t'(33'h1_12345678), 1'b0, 1'b0);
+    reset_dut();
+    cycle(1'b0, '0, 1'b1, 1'b0);
+  endtask
+
+  task automatic test_throughput();
+    // Sustain one accepted transfer per cycle with a ready consumer.
+    reset_dut();
+    for (int unsigned i = 0; i < 100; i++) begin
+      cycle(1'b1, payload_t'(i), 1'b1, 1'b0);
+    end
+  endtask
+
+  task automatic test_backpressure();
+    // Hold the output stable under backpressure, then replace it on a pop.
+    reset_dut();
+    cycle(1'b1, payload_t'(33'h1_87654321), 1'b0, 1'b0);
+    repeat (20) cycle(1'b1, payload_t'($urandom), 1'b0, 1'b0);
+    cycle(1'b1, payload_t'(33'h0_12345678), 1'b1, 1'b0);
+  endtask
+
+  task automatic test_flush();
+    // Flush an occupied stage, block both handshakes, then accept new data.
+    reset_dut();
+    cycle(1'b1, payload_t'(33'h1_12345678), 1'b0, 1'b0);
+    cycle(1'b1, payload_t'(33'h1_87654321), 1'b1, 1'b1);
+    cycle(1'b0, '0, 1'b1, 1'b0);
+    cycle(1'b1, payload_t'(33'h1_aabbccdd), 1'b1, 1'b0);
+  endtask
+
+  task automatic test_random_traffic();
+    // Randomize traffic, stalls, and flushes, then drain all pending data.
+    reset_dut();
+    df_verify_pkg::check(RANDOM_CYCLES > 0, "RANDOM_CYCLES must be positive");
+    repeat (RANDOM_CYCLES) begin
+      cycle(1'($urandom), payload_t'({$urandom, $urandom}), 1'($urandom), $urandom_range(0, 15
+            ) == 0);
+    end
+    cycle(1'b0, '0, 1'b1, 1'b0);
+    cycle(1'b0, '0, 1'b1, 1'b0);
+    df_verify_pkg::check(!out.valid, "Pipeline did not drain");
+  endtask
+
+  task automatic check_results();
+    scoreboard.check_empty();
   endtask
 
   initial begin
@@ -99,47 +156,13 @@ module tb_flushable_pipe
     full_model = 1'b0;
     payload_model = '0;
 
-    // Test 1: Reset an empty stage and verify idle operation.
-    reset_dut();
-    cycle(1'b0, '0, 1'b1, 1'b0);
-
-    // Test 2: Reset an occupied stage and discard the pending payload.
-    cycle(1'b1, payload_t'(33'h1_12345678), 1'b0, 1'b0);
-    reset_dut();
-    cycle(1'b0, '0, 1'b1, 1'b0);
-
-    // Test 3: Sustain one accepted transfer per cycle with a ready consumer.
-    reset_dut();
-    for (int unsigned i = 0; i < 100; i++) begin
-      cycle(1'b1, payload_t'(i), 1'b1, 1'b0);
-    end
-
-    // Test 4: Hold the output stable under backpressure, then replace it on a pop.
-    reset_dut();
-    cycle(1'b1, payload_t'(33'h1_87654321), 1'b0, 1'b0);
-    repeat (20) cycle(1'b1, payload_t'($urandom), 1'b0, 1'b0);
-    cycle(1'b1, payload_t'(33'h0_12345678), 1'b1, 1'b0);
-
-    // Test 5: Flush an occupied stage, block both handshakes, then accept new data.
-    reset_dut();
-    cycle(1'b1, payload_t'(33'h1_12345678), 1'b0, 1'b0);
-    cycle(1'b1, payload_t'(33'h1_87654321), 1'b1, 1'b1);
-    cycle(1'b0, '0, 1'b1, 1'b0);
-    cycle(1'b1, payload_t'(33'h1_aabbccdd), 1'b1, 1'b0);
-
-    // Test 6: Randomize traffic, stalls, and flushes, then drain all pending data.
-    reset_dut();
-    check(RANDOM_CYCLES > 0, "RANDOM_CYCLES must be positive");
-    repeat (RANDOM_CYCLES) begin
-      cycle(1'($urandom), payload_t'({$urandom, $urandom}), 1'($urandom), $urandom_range(0, 15
-            ) == 0);
-    end
-    cycle(1'b0, '0, 1'b1, 1'b0);
-    cycle(1'b0, '0, 1'b1, 1'b0);
-    check(!out.valid, "Pipeline did not drain");
-
-    // Finish
-    scoreboard.check_empty();
-    finish_test();
+    test_reset_empty();
+    test_reset_occupied();
+    test_throughput();
+    test_backpressure();
+    test_flush();
+    test_random_traffic();
+    check_results();
+    df_verify_pkg::finish_test();
   end
 endmodule
