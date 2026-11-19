@@ -20,6 +20,9 @@ sources:
   - target: all(verify, verify_addr_decode_dyn)
     files:
       - tests/tb_addr_decode_dyn.sv
+  - target: all(verify, verify_arbiter_priority)
+    files:
+      - tests/tb_arbiter_priority.sv
   - target: all(verify, verify_flushable_pipe)
     files:
       - tests/tb_flushable_pipe.sv

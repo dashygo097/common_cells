@@ -2,8 +2,8 @@
 `include "cc/registers.svh"
 
 module fifo #(
-    parameter type payload_t = logic,
-    parameter int unsigned DEPTH = 4
+    parameter type         payload_t = logic,
+    parameter int unsigned DEPTH     = 4
 ) (
     input logic clk_i,
     input logic rst_n_i,
