@@ -1,6 +1,6 @@
 packages:
   dicflow:
-    revision: 0ff244590ea41774d1286b9026cfb35773a89592
+    revision: a8558106a0af6a4d57cb8a84e0d872eb799f4c9a
     version: null
     source:
       Git: https://github.com/dashygo097/dicflow.git
